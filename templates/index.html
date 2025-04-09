@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Web Music Player</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    #playlist li, #queue li { cursor: pointer; margin: 10px 0; list-style: none; }
+    input, button { margin-top: 10px; padding: 8px; width: 100%; }
+    li img { width: 50px; height: 50px; margin-right: 10px; object-fit: cover; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>🎶 My Music Player</h1>
+
+  <input type="text" id="search" placeholder="Search songs..." oninput="handleSearch()"/>
+
+  <h3>All Songs</h3>
+  <ul id="playlist"></ul>
+
+  <h3>Queue</h3>
+  <ul id="queue"></ul>
+  <button onclick="playNext()">▶️ Play Next</button>
+
+  <h3>Player</h3>
+  <audio id="player" controls style="width: 100%; margin-top: 10px;"></audio>
+
+  <h3>🎵 Save Playlist</h3>
+  <input type="text" id="playlist-name" placeholder="Playlist name..." />
+  <button onclick="savePlaylist()">Save</button>
+
+  <h3>📂 Load Playlist</h3>
+  <input type="text" id="load-name" placeholder="Playlist name..." />
+  <button onclick="loadPlaylist()">Load</button>
+
+  <script>
+    const queue = [];
+    const queueElem = document.getElementById("queue");
+    const player = document.getElementById("player");
+    let songs = [];
+
+    function formatDuration(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = String(Math.floor(seconds % 60)).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function loadAllSongs() {
+      fetch("/api/songs")
+        .then(res => res.json())
+        .then(data => {
+          songs = data;
+          showSongs(songs);
+        });
+    }
+
+    function showSongs(list) {
+      const playlist = document.getElementById("playlist");
+      playlist.innerHTML = "";
+      list.forEach(song => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+
+        const img = document.createElement("img");
+        img.src = `/api/cover/${song.name}`;
+        img.onerror = () => img.src = "/static/default.jpg";
+        li.appendChild(img);
+
+        const text = document.createElement("span");
+        text.innerHTML = `<b>${song.title}</b> - ${song.artist} <small>(${formatDuration(song.duration)})</small>`;
+        li.appendChild(text);
+
+        li.onclick = () => addToQueue(song.name);
+        playlist.appendChild(li);
+      });
+    }
+
+    function addToQueue(name) {
+      queue.push(name);
+      updateQueue();
+    }
+
+    function updateQueue() {
+      queueElem.innerHTML = "";
+      queue.forEach((name, i) => {
+        const li = document.createElement("li");
+        li.textContent = `${i + 1}. ${name}`;
+        li.onclick = () => playSong(name);
+        queueElem.appendChild(li);
+      });
+    }
+
+    function playSong(name) {
+      player.src = `/music/${name}`;
+      player.play();
+    }
+
+    function playNext() {
+      if (queue.length === 0) return;
+      const next = queue.shift();
+      playSong(next);
+      updateQueue();
+    }
+
+    player.onended = playNext;
+
+    function handleSearch() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const filtered = songs.filter(song =>
+        song.title.toLowerCase().includes(q) ||
+        song.artist.toLowerCase().includes(q) ||
+        song.album.toLowerCase().includes(q)
+      );
+      showSongs(filtered);
+    }
+
+    function savePlaylist() {
+      const name = document.getElementById("playlist-name").value;
+      if (!name || queue.length === 0) return alert("Provide playlist name and queue at least one song.");
+      fetch("/api/save_playlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `name=${encodeURIComponent(name)}&songs=${encodeURIComponent(JSON.stringify(queue))}`
+      }).then(() => alert("Playlist saved."));
+    }
+
+    function loadPlaylist() {
+      const name = document.getElementById("load-name").value;
+      if (!name) return;
+      fetch(`/api/load_playlist/${name}`)
+        .then(res => res.json())
+        .then(data => {
+          queue.length = 0;
+          data.forEach(song => queue.push(song));
+          updateQueue();
+        });
+    }
+
+    window.onload = loadAllSongs;
+  </script>
+</body>
+</html>
