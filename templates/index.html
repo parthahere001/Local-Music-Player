@@ -8,6 +8,11 @@
     #playlist li, #queue li { cursor: pointer; margin: 10px 0; list-style: none; }
     input, button, select { margin-top: 10px; padding: 8px; width: 100%; }
     li img { width: 50px; height: 50px; margin-right: 10px; object-fit: cover; border-radius: 6px; }
+    .queue-buttons button, .playlist-buttons button {
+      margin-left: 10px;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
   </style>
 </head>
 <body>
@@ -84,17 +89,37 @@
         li.dataset.id = song.id;
         li.style.display = "flex";
         li.style.alignItems = "center";
+        li.style.justifyContent = "space-between";
+
+        const left = document.createElement("div");
+        left.style.display = "flex";
+        left.style.alignItems = "center";
 
         const img = document.createElement("img");
         img.src = `/api/cover/${song.id}`;
         img.onerror = () => img.src = "/static/default.jpg";
-        li.appendChild(img);
+        left.appendChild(img);
 
         const text = document.createElement("span");
         text.innerHTML = `<b>${song.title}</b> - ${song.artist} <small>(${formatDuration(song.duration)})</small>`;
-        li.appendChild(text);
+        left.appendChild(text);
+        li.appendChild(left);
 
-        li.onclick = () => addToQueue(song.id);
+        const btns = document.createElement("div");
+        btns.className = "playlist-buttons";
+
+        const qBtn = document.createElement("button");
+        qBtn.textContent = "➕ Queue";
+        qBtn.onclick = (e) => { e.stopPropagation(); addToQueue(song.id); };
+
+        const pNowBtn = document.createElement("button");
+        pNowBtn.textContent = "▶️ Play Now";
+        pNowBtn.onclick = (e) => { e.stopPropagation(); playNow(song.id); };
+
+        btns.appendChild(qBtn);
+        btns.appendChild(pNowBtn);
+        li.appendChild(btns);
+
         playlist.appendChild(li);
       });
     }
@@ -104,13 +129,35 @@
       updateQueue();
     }
 
+    function playNow(id) {
+      queue.unshift(id);
+      updateQueue();
+      playNext();
+    }
+
     function updateQueue() {
       queueElem.innerHTML = "";
       queue.forEach((id, i) => {
         const song = songs.find(s => s.id === id);
         const li = document.createElement("li");
-        li.textContent = `${i + 1}. ${song.title}`;
+        li.style.display = "flex";
+        li.style.justifyContent = "space-between";
+        li.style.alignItems = "center";
+
+        const text = document.createElement("span");
+        text.textContent = `${i + 1}. ${song.title}`;
+        li.appendChild(text);
+
+        const btn = document.createElement("button");
+        btn.textContent = "❌";
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          queue.splice(i, 1);
+          updateQueue();
+        };
+
         li.onclick = () => playSong(id);
+        li.appendChild(btn);
         queueElem.appendChild(li);
       });
     }
