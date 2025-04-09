@@ -92,7 +92,7 @@
 
     #sticky-player {
       background: var(--tab-bg);
-      padding: 20px;
+      padding: 15px;
       border-top: 1px solid #ddd;
       box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
       position: sticky;
@@ -142,6 +142,14 @@
       padding: 4px 8px;
       font-size: 0.8rem;
     }
+
+    #now-playing-cover {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      margin-right: 10px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -172,19 +180,22 @@
 
       <div id="playlists" class="tab-section">
         <h1>🎼 Manage Playlists</h1>
-
         <h3>🎵 Save Playlist</h3>
         <input type="text" id="playlist-name" placeholder="Playlist name..." />
         <button onclick="savePlaylist()">Save</button>
-
         <h3>📂 Load Playlist</h3>
         <input type="text" id="load-name" placeholder="Playlist name..." />
         <button onclick="loadPlaylist()">Load</button>
       </div>
 
       <div id="sticky-player">
-        <h3>Player</h3>
-        <audio id="player" controls style="width: 100%; margin-top: 10px;"></audio>
+        <div style="display: flex; align-items: center;">
+          <img id="now-playing-cover" src="/static/default.jpg" />
+          <div>
+            <div id="now-playing-title"><b>Nothing playing</b></div>
+            <audio id="player" controls style="width: 100%; margin-top: 5px;"></audio>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -194,7 +205,8 @@
     const queueElem = document.getElementById("queue-list");
     const player = document.getElementById("player");
     const artistFilter = document.getElementById("artist-filter");
-    const root = document.documentElement;
+    const cover = document.getElementById("now-playing-cover");
+    const title = document.getElementById("now-playing-title");
     let songs = [];
 
     function switchTab(tab) {
@@ -275,9 +287,13 @@
     }
 
     function playNow(id) {
-      queue.unshift(id);
+      const idx = songs.findIndex(s => s.id === id);
+      if (idx === -1) return;
+
+      queue.length = 0;
+      songs.slice(idx + 1).forEach(song => queue.push(song.id));
+      playSong(id);
       updateQueue();
-      playNext();
     }
 
     function clearQueue() {
@@ -310,6 +326,12 @@
     }
 
     function playSong(id) {
+      const song = songs.find(s => s.id === id);
+      if (!song) return;
+
+      cover.src = `/api/cover/${id}`;
+      title.innerHTML = `<b>${song.title}</b> - ${song.artist}`;
+
       player.src = `/music/${id}`;
       player.play();
     }
