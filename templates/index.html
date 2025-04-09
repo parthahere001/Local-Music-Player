@@ -52,11 +52,16 @@
       overflow: hidden;
     }
 
-    #main {
+    .tab-section {
       flex: 1;
       overflow-y: auto;
       padding: 20px;
       background: #f5f5f5;
+      display: none;
+    }
+
+    .tab-section.active {
+      display: block;
     }
 
     #sticky-player {
@@ -108,41 +113,33 @@
       padding: 4px 8px;
       font-size: 0.8rem;
     }
-
-    #playlist-section, #playlists-tab {
-      display: none;
-    }
-
-    #playlist-section.active, #playlists-tab.active {
-      display: block;
-    }
   </style>
 </head>
 <body>
   <div id="app">
     <div id="sidebar">
       <h2>🎶 Menu</h2>
-      <button onclick="switchTab('main')">🎵 All Songs</button>
+      <button onclick="switchTab('songs')">🎵 Songs</button>
+      <button onclick="switchTab('queue')">📃 Queue</button>
       <button onclick="switchTab('playlists')">📁 Playlists</button>
     </div>
 
     <div id="content">
-      <div id="main" class="tab-section active" id="playlist-section">
-        <h1>My Music Player</h1>
-
+      <div id="songs" class="tab-section active">
+        <h1>All Songs</h1>
         <input type="text" id="search" placeholder="Search..." oninput="handleSearch()" />
         <select id="artist-filter" onchange="handleSearch()">
           <option value="">🎤 Filter by artist</option>
         </select>
-
-        <h3>All Songs</h3>
         <ul id="playlist"></ul>
-
-        <h3>Queue</h3>
-        <ul id="queue"></ul>
       </div>
 
-      <div id="playlists-tab" class="tab-section">
+      <div id="queue" class="tab-section">
+        <h1>Current Queue</h1>
+        <ul id="queue-list"></ul>
+      </div>
+
+      <div id="playlists" class="tab-section">
         <h1>🎼 Manage Playlists</h1>
 
         <h3>🎵 Save Playlist</h3>
@@ -163,20 +160,14 @@
 
   <script>
     const queue = [];
-    const queueElem = document.getElementById("queue");
+    const queueElem = document.getElementById("queue-list");
     const player = document.getElementById("player");
     const artistFilter = document.getElementById("artist-filter");
     let songs = [];
 
     function switchTab(tab) {
-      document.querySelector("#main").classList.remove("active");
-      document.querySelector("#playlists-tab").classList.remove("active");
-
-      if (tab === "main") {
-        document.querySelector("#main").classList.add("active");
-      } else if (tab === "playlists") {
-        document.querySelector("#playlists-tab").classList.add("active");
-      }
+      document.querySelectorAll(".tab-section").forEach(s => s.classList.remove("active"));
+      document.getElementById(tab).classList.add("active");
     }
 
     function formatDuration(seconds) {
