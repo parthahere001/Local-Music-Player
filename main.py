@@ -15,6 +15,7 @@ templates = Jinja2Templates(directory="templates")
 # Folders to scan for .mp3 files
 SEARCH_DIRS = [
     os.path.expanduser("~/Music"),
+    os.path.expanduser("~/Desktop"),
     os.path.expanduser("~/Downloads"),
 ]
 

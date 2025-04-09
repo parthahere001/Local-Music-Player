@@ -6,14 +6,17 @@
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
     #playlist li, #queue li { cursor: pointer; margin: 10px 0; list-style: none; }
-    input, button { margin-top: 10px; padding: 8px; width: 100%; }
+    input, button, select { margin-top: 10px; padding: 8px; width: 100%; }
     li img { width: 50px; height: 50px; margin-right: 10px; object-fit: cover; border-radius: 6px; }
   </style>
 </head>
 <body>
   <h1>🎶 My Music Player</h1>
 
-  <input type="text" id="search" placeholder="Search songs..." oninput="handleSearch()"/>
+  <input type="text" id="search" placeholder="Search title, artist, album..." oninput="handleSearch()" />
+  <select id="artist-filter" onchange="handleSearch()">
+    <option value="">🎤 Filter by artist</option>
+  </select>
 
   <h3>All Songs</h3>
   <ul id="playlist"></ul>
@@ -37,6 +40,7 @@
     const queue = [];
     const queueElem = document.getElementById("queue");
     const player = document.getElementById("player");
+    const artistFilter = document.getElementById("artist-filter");
     let songs = [];
 
     function formatDuration(seconds) {
@@ -50,15 +54,34 @@
         .then(res => res.json())
         .then(data => {
           songs = data;
+          populateArtistFilter(songs);
           showSongs(songs);
         });
     }
 
+    function populateArtistFilter(songs) {
+      const artists = Array.from(new Set(songs.map(s => s.artist))).sort();
+      artistFilter.innerHTML = `<option value="">🎤 Filter by artist</option>`;
+      artists.forEach(artist => {
+        const opt = document.createElement("option");
+        opt.value = artist;
+        opt.textContent = artist;
+        artistFilter.appendChild(opt);
+      });
+    }
+
     function showSongs(list) {
+      const sorted = [...list].sort((a, b) => a.title.localeCompare(b.title));
+      const currentIds = Array.from(document.querySelectorAll("#playlist li")).map(li => li.dataset.id);
+      const newIds = sorted.map(s => s.id);
+      if (JSON.stringify(currentIds) === JSON.stringify(newIds)) return;
+
       const playlist = document.getElementById("playlist");
       playlist.innerHTML = "";
-      list.forEach(song => {
+
+      sorted.forEach(song => {
         const li = document.createElement("li");
+        li.dataset.id = song.id;
         li.style.display = "flex";
         li.style.alignItems = "center";
 
@@ -108,10 +131,12 @@
 
     function handleSearch() {
       const q = document.getElementById("search").value.toLowerCase();
+      const artist = artistFilter.value;
       const filtered = songs.filter(song =>
-        song.title.toLowerCase().includes(q) ||
-        song.artist.toLowerCase().includes(q) ||
-        song.album.toLowerCase().includes(q)
+        (song.title.toLowerCase().includes(q) ||
+         song.artist.toLowerCase().includes(q) ||
+         song.album.toLowerCase().includes(q)) &&
+        (artist === "" || song.artist === artist)
       );
       showSongs(filtered);
     }
