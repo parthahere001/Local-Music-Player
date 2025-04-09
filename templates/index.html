@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Web Music Player</title>
   <style>
     * {
@@ -108,18 +108,26 @@
       padding: 4px 8px;
       font-size: 0.8rem;
     }
+
+    #playlist-section, #playlists-tab {
+      display: none;
+    }
+
+    #playlist-section.active, #playlists-tab.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div id="app">
     <div id="sidebar">
       <h2>🎶 Menu</h2>
-      <button onclick="alert('Playlists coming soon')">📁 Playlists</button>
-      <button onclick="alert('Settings coming soon')">⚙️ Settings</button>
+      <button onclick="switchTab('main')">🎵 All Songs</button>
+      <button onclick="switchTab('playlists')">📁 Playlists</button>
     </div>
 
     <div id="content">
-      <div id="main">
+      <div id="main" class="tab-section active" id="playlist-section">
         <h1>My Music Player</h1>
 
         <input type="text" id="search" placeholder="Search..." oninput="handleSearch()" />
@@ -129,15 +137,13 @@
 
         <h3>All Songs</h3>
         <ul id="playlist"></ul>
-      </div>
 
-      <div id="sticky-player">
         <h3>Queue</h3>
         <ul id="queue"></ul>
-        <button onclick="playNext()">▶️ Play Next</button>
+      </div>
 
-        <h3>Player</h3>
-        <audio id="player" controls style="width: 100%; margin-top: 10px;"></audio>
+      <div id="playlists-tab" class="tab-section">
+        <h1>🎼 Manage Playlists</h1>
 
         <h3>🎵 Save Playlist</h3>
         <input type="text" id="playlist-name" placeholder="Playlist name..." />
@@ -147,16 +153,31 @@
         <input type="text" id="load-name" placeholder="Playlist name..." />
         <button onclick="loadPlaylist()">Load</button>
       </div>
+
+      <div id="sticky-player">
+        <h3>Player</h3>
+        <audio id="player" controls style="width: 100%; margin-top: 10px;"></audio>
+      </div>
     </div>
   </div>
 
-  <!-- Include previous JS logic as-is -->
   <script>
     const queue = [];
     const queueElem = document.getElementById("queue");
     const player = document.getElementById("player");
     const artistFilter = document.getElementById("artist-filter");
     let songs = [];
+
+    function switchTab(tab) {
+      document.querySelector("#main").classList.remove("active");
+      document.querySelector("#playlists-tab").classList.remove("active");
+
+      if (tab === "main") {
+        document.querySelector("#main").classList.add("active");
+      } else if (tab === "playlists") {
+        document.querySelector("#playlists-tab").classList.add("active");
+      }
+    }
 
     function formatDuration(seconds) {
       const m = Math.floor(seconds / 60);
@@ -187,10 +208,6 @@
 
     function showSongs(list) {
       const sorted = [...list].sort((a, b) => a.title.localeCompare(b.title));
-      const currentIds = Array.from(document.querySelectorAll("#playlist li")).map(li => li.dataset.id);
-      const newIds = sorted.map(s => s.id);
-      if (JSON.stringify(currentIds) === JSON.stringify(newIds)) return;
-
       const playlist = document.getElementById("playlist");
       playlist.innerHTML = "";
 
