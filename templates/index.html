@@ -150,6 +150,16 @@
       margin-right: 10px;
       border-radius: 5px;
     }
+
+    #player-controls button {
+      padding: 6px 10px;
+      font-size: 1.2rem;
+    }
+
+    #player {
+      width: 100%;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -189,11 +199,17 @@
       </div>
 
       <div id="sticky-player">
-        <div style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
           <img id="now-playing-cover" src="/static/default.jpg" />
-          <div>
+          <div style="flex: 1;">
             <div id="now-playing-title"><b>Nothing playing</b></div>
-            <audio id="player" controls style="width: 100%; margin-top: 5px;"></audio>
+            <div id="player-controls" style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+              <button onclick="playPrevious()">⏮️</button>
+              <button onclick="player.play()">▶️</button>
+              <button onclick="player.pause()">⏸️</button>
+              <button onclick="playNext()">⏭️</button>
+            </div>
+            <audio id="player" controls></audio>
           </div>
         </div>
       </div>
@@ -208,6 +224,7 @@
     const cover = document.getElementById("now-playing-cover");
     const title = document.getElementById("now-playing-title");
     let songs = [];
+    let currentSongId = null;
 
     function switchTab(tab) {
       document.querySelectorAll(".tab-section").forEach(s => s.classList.remove("active"));
@@ -287,13 +304,51 @@
     }
 
     function playNow(id) {
-      const idx = songs.findIndex(s => s.id === id);
+      const sorted = [...songs].sort((a, b) => a.title.localeCompare(b.title));
+      const idx = sorted.findIndex(s => s.id === id);
       if (idx === -1) return;
 
       queue.length = 0;
-      songs.slice(idx + 1).forEach(song => queue.push(song.id));
+      sorted.slice(idx + 1).forEach(s => queue.push(s.id));
+      currentSongId = id;
       playSong(id);
       updateQueue();
+    }
+
+    function playSong(id) {
+      const song = songs.find(s => s.id === id);
+      if (!song) return;
+
+      currentSongId = id;
+      cover.src = `/api/cover/${id}`;
+      title.innerHTML = `<b>${song.title}</b> - ${song.artist}`;
+
+      player.src = `/music/${id}`;
+      player.play();
+    }
+
+    function playNext() {
+      if (queue.length === 0) return;
+      const next = queue.shift();
+      currentSongId = next;
+      playSong(next);
+      updateQueue();
+    }
+
+    function playPrevious() {
+      if (!currentSongId) return;
+
+      const sorted = [...songs].sort((a, b) => a.title.localeCompare(b.title));
+      const idx = sorted.findIndex(s => s.id === currentSongId);
+      if (idx > 0) {
+        const prev = sorted[idx - 1].id;
+        playSong(prev);
+
+        queue.length = 0;
+        sorted.slice(idx).forEach(s => queue.push(s.id));
+        queue.shift();
+        updateQueue();
+      }
     }
 
     function clearQueue() {
@@ -324,26 +379,6 @@
         queueElem.appendChild(li);
       });
     }
-
-    function playSong(id) {
-      const song = songs.find(s => s.id === id);
-      if (!song) return;
-
-      cover.src = `/api/cover/${id}`;
-      title.innerHTML = `<b>${song.title}</b> - ${song.artist}`;
-
-      player.src = `/music/${id}`;
-      player.play();
-    }
-
-    function playNext() {
-      if (queue.length === 0) return;
-      const next = queue.shift();
-      playSong(next);
-      updateQueue();
-    }
-
-    player.onended = playNext;
 
     function handleSearch() {
       const q = document.getElementById("search").value.toLowerCase();
@@ -383,6 +418,7 @@
       document.body.classList.toggle("dark");
     }
 
+    player.onended = playNext;
     window.onload = loadAllSongs;
   </script>
 </body>
