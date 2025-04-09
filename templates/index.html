@@ -63,7 +63,7 @@
         li.style.alignItems = "center";
 
         const img = document.createElement("img");
-        img.src = `/api/cover/${song.name}`;
+        img.src = `/api/cover/${song.id}`;
         img.onerror = () => img.src = "/static/default.jpg";
         li.appendChild(img);
 
@@ -71,28 +71,29 @@
         text.innerHTML = `<b>${song.title}</b> - ${song.artist} <small>(${formatDuration(song.duration)})</small>`;
         li.appendChild(text);
 
-        li.onclick = () => addToQueue(song.name);
+        li.onclick = () => addToQueue(song.id);
         playlist.appendChild(li);
       });
     }
 
-    function addToQueue(name) {
-      queue.push(name);
+    function addToQueue(id) {
+      queue.push(id);
       updateQueue();
     }
 
     function updateQueue() {
       queueElem.innerHTML = "";
-      queue.forEach((name, i) => {
+      queue.forEach((id, i) => {
+        const song = songs.find(s => s.id === id);
         const li = document.createElement("li");
-        li.textContent = `${i + 1}. ${name}`;
-        li.onclick = () => playSong(name);
+        li.textContent = `${i + 1}. ${song.title}`;
+        li.onclick = () => playSong(id);
         queueElem.appendChild(li);
       });
     }
 
-    function playSong(name) {
-      player.src = `/music/${name}`;
+    function playSong(id) {
+      player.src = `/music/${id}`;
       player.play();
     }
 
@@ -132,7 +133,7 @@
         .then(res => res.json())
         .then(data => {
           queue.length = 0;
-          data.forEach(song => queue.push(song));
+          data.forEach(id => queue.push(id));
           updateQueue();
         });
     }
