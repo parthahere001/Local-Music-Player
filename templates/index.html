@@ -4,17 +4,52 @@
   <meta charset="UTF-8">
   <title>Web Music Player</title>
   <style>
-    html, body {
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
       height: 100%;
       font-family: sans-serif;
     }
 
     #app {
       display: flex;
-      flex-direction: column;
       height: 100vh;
+      overflow: hidden;
+    }
+
+    #sidebar {
+      width: 200px;
+      background: #1e1e1e;
+      color: #fff;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar h2 {
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+    }
+
+    #sidebar button {
+      background: none;
+      border: none;
+      color: #fff;
+      margin: 10px 0;
+      text-align: left;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     #main {
@@ -24,11 +59,14 @@
       background: #f5f5f5;
     }
 
-    #controls {
-      padding: 20px;
+    #sticky-player {
       background: #fff;
-      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+      padding: 20px;
       border-top: 1px solid #ddd;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
     }
 
     input, button, select {
@@ -37,24 +75,13 @@
       width: 100%;
     }
 
-    #playlist li, #queue li {
-      cursor: pointer;
-      margin: 10px 0;
+    ul {
       list-style: none;
+      padding: 0;
     }
 
-    li img {
-      width: 50px;
-      height: 50px;
-      margin-right: 10px;
-      object-fit: cover;
-      border-radius: 6px;
-    }
-
-    .queue-buttons button, .playlist-buttons button {
-      margin-left: 10px;
-      padding: 4px 8px;
-      font-size: 0.8rem;
+    li {
+      margin: 10px 0;
     }
 
     #playlist li, #queue li {
@@ -67,40 +94,63 @@
       display: flex;
       align-items: center;
     }
+
+    #playlist img {
+      width: 50px;
+      height: 50px;
+      margin-right: 10px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .playlist-buttons button, .queue-buttons button {
+      margin-left: 10px;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
   </style>
 </head>
 <body>
   <div id="app">
-    <div id="main">
-      <h1>🎶 My Music Player</h1>
-
-      <input type="text" id="search" placeholder="Search title, artist, album..." oninput="handleSearch()" />
-      <select id="artist-filter" onchange="handleSearch()">
-        <option value="">🎤 Filter by artist</option>
-      </select>
-
-      <h3>All Songs</h3>
-      <ul id="playlist"></ul>
+    <div id="sidebar">
+      <h2>🎶 Menu</h2>
+      <button onclick="alert('Playlists coming soon')">📁 Playlists</button>
+      <button onclick="alert('Settings coming soon')">⚙️ Settings</button>
     </div>
 
-    <div id="controls">
-      <h3>Queue</h3>
-      <ul id="queue"></ul>
-      <button onclick="playNext()">▶️ Play Next</button>
+    <div id="content">
+      <div id="main">
+        <h1>My Music Player</h1>
 
-      <h3>Player</h3>
-      <audio id="player" controls style="width: 100%; margin-top: 10px;"></audio>
+        <input type="text" id="search" placeholder="Search..." oninput="handleSearch()" />
+        <select id="artist-filter" onchange="handleSearch()">
+          <option value="">🎤 Filter by artist</option>
+        </select>
 
-      <h3>🎵 Save Playlist</h3>
-      <input type="text" id="playlist-name" placeholder="Playlist name..." />
-      <button onclick="savePlaylist()">Save</button>
+        <h3>All Songs</h3>
+        <ul id="playlist"></ul>
+      </div>
 
-      <h3>📂 Load Playlist</h3>
-      <input type="text" id="load-name" placeholder="Playlist name..." />
-      <button onclick="loadPlaylist()">Load</button>
+      <div id="sticky-player">
+        <h3>Queue</h3>
+        <ul id="queue"></ul>
+        <button onclick="playNext()">▶️ Play Next</button>
+
+        <h3>Player</h3>
+        <audio id="player" controls style="width: 100%; margin-top: 10px;"></audio>
+
+        <h3>🎵 Save Playlist</h3>
+        <input type="text" id="playlist-name" placeholder="Playlist name..." />
+        <button onclick="savePlaylist()">Save</button>
+
+        <h3>📂 Load Playlist</h3>
+        <input type="text" id="load-name" placeholder="Playlist name..." />
+        <button onclick="loadPlaylist()">Load</button>
+      </div>
     </div>
   </div>
 
+  <!-- Include previous JS logic as-is -->
   <script>
     const queue = [];
     const queueElem = document.getElementById("queue");
